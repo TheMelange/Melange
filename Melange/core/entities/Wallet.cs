@@ -31,7 +31,7 @@ namespace Melange.core.entities
             }
         }
 
-        public bool VerifySignature(string data, string signature, string publicKey)
+        public static bool VerifySignature(string data, string signature, string publicKey)
         {
             using (var ecdsa = ECDsa.Create())
             {
@@ -39,6 +39,12 @@ namespace Melange.core.entities
                 return ecdsa.VerifyData(Encoding.UTF8.GetBytes(data), Convert.FromBase64String(signature), HashAlgorithmName.SHA256);
             }
         }
+
+        public static string ConvertTransactionToData(Transaction transaction)
+        {
+            return $"{transaction.FromAddress}-{transaction.ToAddress}-{transaction.Amount}";
+        }
+
         // todo: temporary method to get private key for testing purposes
         public string GetPrivateKey()
         {

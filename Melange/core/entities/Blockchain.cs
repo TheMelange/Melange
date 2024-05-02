@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Melange.core.entities.validators;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,9 @@ namespace Melange.core.entities
         public const int MAX_COINS = 1000000;
         public const double TARGET_BLOCK_TIME = 600; // 10 minutes
 
+        // ##############################
+        // # Public methods
+        // ##############################
         public Blockchain(int difficulty, double miningReward)
         {
             Chain = new List<Block>();
@@ -28,55 +32,116 @@ namespace Melange.core.entities
             InitializeChain();
         }
 
-        public double GetMiningReward()
+        public void ValidatePendingTransactions(string minerAddress)
         {
-            return this.miningReward;
-        }
-
-        private void InitializeChain()
-        {
-            Console.WriteLine("Initializing chain...");
-            Console.WriteLine("Genesis block...");
-            AddBlock(new Block(0, DateTime.Now, null, new List<Transaction>(), new List<string>()));
-        }
-
-        public Block GetLatestBlock()
-        {
-            return Chain[^1];
-        }
-
-        public void AddBlock(Block block)
-        {
-            if (Chain.Count == 0)
-                block.PreviousHash = null;
-            else
-                block.PreviousHash = GetLatestBlock().Hash;
-
-            block.MineBlock(difficulty);
-            Chain.Add(block);
-        }
-
-        public void AddTransaction(Transaction transaction)
-        {
-            if (!transaction.IsValid())
+            // check if the transaction is valid
+            foreach (var transaction in pendingTransactions)
             {
-                Console.WriteLine("Transaction is not valid.");
+                var block = GetBlockById(transaction.BlockIndex);
+                if (block == null)
+                {
+                    Console.WriteLine("Block not found.");
+                    transaction.Validators.Add(new ValidatorEntity(minerAddress, false));
+                    continue;
+                }
+
+                // check if it is a reward transaction
+                if (transaction.FromAddress == null)
+                {
+                    // check if the miner is the same as the one who mined the block
+                    // get the block based on the blockId
+                    if(transaction.ToAddress == block.MinerAddress)
+                    {
+                        transaction.Validators.Add(new ValidatorEntity(minerAddress, true));
+                    }
+                    continue;
+                }
+
+                // check if the transaction is not already in the block
+                if (block.Transactions.Contains(transaction))
+                {
+                    Console.WriteLine("Transaction already in the block.");
+                    transaction.Validators.Add(new ValidatorEntity(minerAddress, false));
+                    continue;
+                }
+
+                var transactionState = Wallet.VerifySignature(Wallet.ConvertTransactionToData(transaction), transaction.Signature, transaction.FromAddress);
+
+                var newValidator = new ValidatorEntity(minerAddress, transactionState);
+                transaction.Validators.Add(newValidator);
+
+                // TODO: create a new method to add the valid transactions to the chain
+                // TODO: and after the transactions to be addded to the block, add the rewards transaction
+                double transactionFee = transaction.Fee;
+                double expectedReward = transactionFee / transaction.Validators.Count;
+                Transaction rewardTransaction = new Transaction(block.Index, null, minerAddress, expectedReward, null, 0);
+                pendingTransactions.Add(rewardTransaction);
+
+            }
+
+            // add pending transactions to the latest block mined
+            pendingTransactions.AddRange(mempool);
+            Chain[GetLatestBlock().Index].Transactions.AddRange(pendingTransactions);
+            // TODO: the pending transactions should be cleared after the block is mined
+            mempool.Clear();
+            pendingTransactions.Clear();
+        }
+
+        public Wallet CreateWallet()
+        {
+            Wallet wallet = new Wallet();
+            wallets.Add(wallet);
+            return wallet;
+        }
+
+        public void ValidatePendingBlock(Block block, string minerCheckerAddress, string minerCheckerSignature)
+        {
+            if (block.Validators.Count > 50)
+            {
+                Console.WriteLine($"50 validators already validated the new block");
                 return;
             }
-            mempool.Add(transaction);
-        }
 
+            // check if the miner is the same as the one who mined the block
+            var checkMiner = block.MinerAddress == minerCheckerAddress;
+            if (checkMiner)
+            {
+                Console.WriteLine("The miner cannot validate the block.");
+                return;
+            }
+
+            // check if this block is already in the chain
+            var blockInChain = GetBlockByHash(block.Hash);
+            if (blockInChain != null)
+            {
+                Console.WriteLine("The block is already in the chain.");
+                block.Validators.Add(new ValidatorEntity(minerCheckerAddress, false));
+            }
+
+            // check if the block is valid based on the PoW
+            var isValidBlock = block.IsValid(difficulty);
+            if (isValidBlock)
+            {
+                block.Validators.Add(new ValidatorEntity(minerCheckerAddress, true));
+            }
+            else
+            {
+                block.Validators.Add(new ValidatorEntity(minerCheckerAddress, false));
+            }
+        }
         public void MineNewBlock(string minerAddress)
         {
-            Block block = new Block(Chain.Count, DateTime.Now, GetLatestBlock().Hash, pendingTransactions, new List<string>());
+            Block block = new Block(Chain.Count, DateTime.Now, GetLatestBlock().Hash, pendingTransactions, new List<ValidatorEntity>(), minerAddress);
             block.MineBlock(difficulty);
             double totalCoinsInBlockchain = GetTotalCoinsInBlockchain();
             if (totalCoinsInBlockchain <= MAX_COINS)
             {
                 // generate mining reward transaction
-                Transaction rewardTransaction = new Transaction(null, minerAddress, miningReward, null, 0);
+                Transaction rewardTransaction = new Transaction(block.Index, null, minerAddress, miningReward, null, 0);
                 pendingTransactions.Add(rewardTransaction);
+
             }
+            // TODO: the block should be added to the chain only if the block is valid (validators should validate the block)
             Chain.Add(block);
 
             // adjust the difficulty
@@ -95,68 +160,18 @@ namespace Melange.core.entities
 
         }
 
-        private double CalculateAverageMiningTime()
+
+        // ##############################
+        // # Public Get methods
+        // ##############################
+        public double GetMiningReward()
         {
-            if (Chain.Count <= 2016)
-            {
-                return TARGET_BLOCK_TIME; 
-            }
-
-            TimeSpan totalMiningTime = TimeSpan.Zero;
-            for (int i = Chain.Count - 1; i >= Chain.Count - 2016; i--)
-            {
-                totalMiningTime += Chain[i].Timestamp - Chain[i - 1].Timestamp;
-            }
-
-            return totalMiningTime.TotalSeconds / 2016;
+            return this.miningReward;
         }
 
-        private void AdjustDifficulty()
+        public Block GetLatestBlock()
         {
-            double averageMiningTime = CalculateAverageMiningTime();
-
-            if (averageMiningTime > TARGET_BLOCK_TIME)
-            {
-                difficulty--;
-            }
-            else
-            {
-                difficulty++;
-            }
-
-            Console.WriteLine(" > New difficulty: " + difficulty);
-        }
-
-        private void AdjustHalving()
-        {
-            double totalCoinsInBlockchain = GetTotalCoinsInBlockchain();
-            if (totalCoinsInBlockchain <= MAX_COINS)
-            {
-                miningReward = miningReward / 2;
-            }
-        }
-
-        public void MinePendingTransactions(string minerAddress)
-        {
-            double totalFees = pendingTransactions.Sum(t => t.Fee);
-            double totalReward = totalFees / Chain[GetLatestBlock().Index].Validators.Count;
-
-            if(pendingTransactions.Count != 0)
-            {
-                Transaction rewardTransaction = new Transaction(null, minerAddress, totalReward, null, 0);
-                pendingTransactions.Add(rewardTransaction);
-                pendingTransactions.AddRange(mempool);
-                // add pending transactions to the latest block mined
-                Chain[GetLatestBlock().Index].Transactions.AddRange(pendingTransactions);
-
-                mempool.Clear();
-                pendingTransactions.Clear();
-            }
-
-            //Block block = new Block(Chain.Count, DateTime.Now, GetLatestBlock().Hash, pendingTransactions, new List<string>());
-            //Chain.Add(block);
-            //Console.WriteLine(" Reward Block : I:" + block.Index + " H:" + block.Hash + " PH:" + block.PreviousHash + " T:" + block.Timestamp + " VC:" + block.Validators.Count);
-            //block.MineBlock(difficulty);
+            return Chain[^1];
         }
 
         public double GetTotalCoinsInBlockchain()
@@ -205,22 +220,71 @@ namespace Melange.core.entities
             return balance;
         }
 
-        public Wallet CreateWallet()
+        public Block? GetBlockByHash(string hash)
         {
-            Wallet wallet = new Wallet();
-            wallets.Add(wallet);
-            return wallet;
+            return Chain.FirstOrDefault(b => b.Hash == hash);
+        }
+        public Block? GetBlockById(int id)
+        {
+            return Chain.FirstOrDefault(b => b.Index == id);
         }
 
-        public void AddValidatorsToBlock(int blockIndex, List<string> validators)
+        // ##############################
+        // # Private methods
+        // ##############################
+        private void InitializeChain()
         {
-            if (blockIndex < 0 || blockIndex >= Chain.Count)
+            Console.WriteLine("Initializing chain...");
+            Console.WriteLine("Genesis block...");
+            Block genesisBlock = new Block(0, DateTime.Now, null, new List<Transaction>(), new List<ValidatorEntity>(), null);
+            if (Chain.Count == 0)
+                genesisBlock.PreviousHash = null;
+            else
+                genesisBlock.PreviousHash = GetLatestBlock().Hash;
+
+            genesisBlock.MineBlock(difficulty);
+            Chain.Add(genesisBlock);
+        }
+
+        private double CalculateAverageMiningTime()
+        {
+            if (Chain.Count <= 2016)
             {
-                Console.WriteLine("Invalid block index.");
-                return;
+                return TARGET_BLOCK_TIME; 
             }
 
-            Chain[blockIndex].Validators.AddRange(validators);
+            TimeSpan totalMiningTime = TimeSpan.Zero;
+            for (int i = Chain.Count - 1; i >= Chain.Count - 2016; i--)
+            {
+                totalMiningTime += Chain[i].Timestamp - Chain[i - 1].Timestamp;
+            }
+
+            return totalMiningTime.TotalSeconds / 2016;
+        }
+
+        private void AdjustDifficulty()
+        {
+            double averageMiningTime = CalculateAverageMiningTime();
+
+            if (averageMiningTime > TARGET_BLOCK_TIME)
+            {
+                difficulty--;
+            }
+            else
+            {
+                difficulty++;
+            }
+
+            Console.WriteLine(" > New difficulty: " + difficulty);
+        }
+
+        private void AdjustHalving()
+        {
+            double totalCoinsInBlockchain = GetTotalCoinsInBlockchain();
+            if (totalCoinsInBlockchain <= MAX_COINS)
+            {
+                miningReward = miningReward / 2;
+            }
         }
     }
 }

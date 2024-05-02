@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Melange.core.entities.validators;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -18,7 +19,7 @@ namespace Melange.core.entities
 
         public void MinePendingTransactions(string minerAddress)
         {
-            Blockchain.MinePendingTransactions(minerAddress);
+            Blockchain.ValidatePendingTransactions(minerAddress);
         }
         public void MineNewBlock(string minerAddress)
         {
@@ -51,11 +52,6 @@ namespace Melange.core.entities
                 Console.WriteLine($"Timestamp: {block.Timestamp}");
                 Console.WriteLine();
             }
-        }
-
-        public void AddValidatorsToBlock(int blockIndex, List<string> validators)
-        {
-            Blockchain.AddValidatorsToBlock(blockIndex, validators);
         }
     }
 }

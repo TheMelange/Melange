@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Melange.core.entities.validators;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -15,10 +16,11 @@ namespace Melange.core.entities
         public string Hash { get; set; }
         public List<Transaction> Transactions { get; set; }
         public int Nonce { get; set; }
-        public List<string> Validators { get; }
+        public List<ValidatorEntity> Validators { get; }
+        public String MinerAddress { get; set; }
 
 
-        public Block(int index, DateTime timestamp, string previousHash, List<Transaction> transactions, List<string> validators)
+        public Block(int index, DateTime timestamp, string previousHash, List<Transaction> transactions, List<ValidatorEntity> validators, string minerAddress)
         {
             Index = index;
             Timestamp = timestamp;
@@ -27,6 +29,7 @@ namespace Melange.core.entities
             Hash = CalculateHash();
             Nonce = 0;
             Validators = validators;
+            MinerAddress = minerAddress;
         }
 
         public string CalculateHash()
@@ -57,6 +60,42 @@ namespace Melange.core.entities
                     return false;
                 }
             }
+            return true;
+        }
+
+        public bool IsValid(int difficulty)
+        {
+            if (Hash == null || !Hash.StartsWith(new string('0', difficulty)))
+            {
+                return false;
+            }
+
+            if (Index <= 0)
+            {
+                return false;
+            }
+
+            if (Index > 0 && string.IsNullOrEmpty(PreviousHash))
+            {
+                return false;
+            }
+
+            if (Index > 0 && !PreviousHash.Equals(PreviousHash))
+            {
+                return false;
+            }
+
+            if (Timestamp > DateTime.Now)
+            {
+                return false;
+            }
+
+            string calculatedHash = CalculateHash();
+            if (!Hash.Equals(calculatedHash))
+            {
+                return false;
+            }
+
             return true;
         }
     }
