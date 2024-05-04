@@ -66,7 +66,7 @@ namespace MelangeTestPeerToPeer.Protocols
                     if (receivedMessageObj != null && receivedMessageObj.Node != null && connectedNodes.FirstOrDefault(node => node.NodeIPAddress == receivedMessageObj.Node.NodeIPAddress && node.NodePort == receivedMessageObj.Node.NodePort) == null)
                     {
                         Console.WriteLine("Received message from new node: " + receivedMessageObj.Node.NodeIPAddress + ":" + receivedMessageObj.Node.NodePort + " Adding it to the connected nodes list");
-                        ConnectCommand.Execute("connect " + receivedMessageObj.Node.NodeIPAddress + ":" + receivedMessageObj.Node.NodePort, connectedNodes);
+                        ConnectCommand.Execute("connect " + receivedMessageObj.Node.NodeIPAddress + ":" + receivedMessageObj.Node.NodePort, connectedNodes, selfNode);
                     }
 
                     //todo: do something with the received message object
@@ -79,6 +79,22 @@ namespace MelangeTestPeerToPeer.Protocols
                         } else if( receivedMessageObj.InstructionCode == "ping")
                         {
                             CommunicationProtocol.SendMessageToNode(receivedMessageObj.Node, selfNode, "send", "pong");
+                        } else if(receivedMessageObj.InstructionCode == "discovery_request")
+                        {
+                            // send the connected nodes to the node that requested it
+                            string connectedNodesString = string.Join(",", connectedNodes.Select(n => n.NodeIPAddress + ":" + n.NodePort));
+                            CommunicationProtocol.SendMessageToNode(receivedMessageObj.Node, selfNode, "discovery_response", connectedNodesString);
+
+                        } else if(receivedMessageObj.InstructionCode == "discovery_response")
+                        {
+                            Console.WriteLine($"Received connected nodes from {receivedMessageObj.Node.NodeIPAddress}:{receivedMessageObj.Node.NodePort} : {receivedMessageObj.Data}");
+
+                            string[] connectedNodesArray = receivedMessageObj.Data.Split(',');
+                            foreach(string node in connectedNodesArray)
+                            {
+                               ConnectCommand.Execute("connect " + node, connectedNodes, selfNode);
+                            }
+
                         }
                     }
                 }
@@ -93,11 +109,15 @@ namespace MelangeTestPeerToPeer.Protocols
         {
             if (command.StartsWith("connect"))
             {
-                ConnectCommand.Execute(command, connectedNodes);
+                ConnectCommand.Execute(command, connectedNodes, selfNode);
             }
             else if (command.StartsWith("send"))
             {
                 SendCommand.Execute(command, connectedNodes,selfNode);
+            }
+            else if(command.StartsWith("discovery"))
+            {
+                DiscoveryCommand.Execute(command, connectedNodes, selfNode);
             }
             else if (command.StartsWith("exit"))
             {

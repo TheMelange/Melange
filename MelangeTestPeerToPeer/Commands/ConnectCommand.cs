@@ -9,7 +9,7 @@ namespace MelangeTestPeerToPeer.Commands
 {
     public static class ConnectCommand
     {
-        public static void Execute(string input, List<NodeConnection> nodes)
+        public static void Execute(string input, List<NodeConnection> nodes, NodeConnection selfNode)
         {
             string[] parts = input.Split(' ');
             if (parts.Length == 2)
@@ -30,7 +30,11 @@ namespace MelangeTestPeerToPeer.Commands
                         return;
                     }
 
-                    // todo: check if he is not trying to connect to himself
+                    if (node.NodeIPAddress == selfNode.NodeIPAddress && node.NodePort == selfNode.NodePort)
+                    {
+                        Console.WriteLine("Cannot connect to self.");
+                        return;
+                    }
 
                     nodes.Add(node);
                     Console.WriteLine($"Connected to node {ipAddress}:{port}");
