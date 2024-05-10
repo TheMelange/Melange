@@ -39,6 +39,8 @@ namespace MelangeTestPeerToPeer.Protocols.Contracts
         public static byte[] Serialize(CommunicationMessage message)
         {
             string json = JsonConvert.SerializeObject(message);
+
+            //Console.WriteLine("Serialized message: " + json);
             return Encoding.ASCII.GetBytes(json);
         }
 
@@ -47,6 +49,7 @@ namespace MelangeTestPeerToPeer.Protocols.Contracts
             try
             {
                 string json = Encoding.ASCII.GetString(data);
+                //Console.WriteLine("Deserialized message: " + json);
                 return JsonConvert.DeserializeObject<CommunicationMessage>(json);
             }
             catch(Exception ex)

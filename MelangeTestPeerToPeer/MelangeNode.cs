@@ -44,7 +44,7 @@ namespace MelangeTestPeerToPeer
             Console.WriteLine("Type 'exit' to quit.");
             Console.WriteLine("Type a message to send to all connected nodes.");
 
-            Thread receiveThread = new Thread(() => CommunicationProtocol.ReceiveMessages(listener, ref connectedNodes, selfNode));
+            Thread receiveThread = new Thread(() => CommunicationProtocol.ReceiveMessages(listener, ref connectedNodes, ref selfNode));
             receiveThread.Start();
 
             while (true)
@@ -52,7 +52,7 @@ namespace MelangeTestPeerToPeer
                 try
                 {
                     string input = Console.ReadLine();
-                    CommunicationProtocol.HandleCommandMessage(input, connectedNodes, selfNode);
+                    CommunicationProtocol.HandleCommandMessage(input, ref connectedNodes, ref selfNode);
                 }
                 catch
                 {

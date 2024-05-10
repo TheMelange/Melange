@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using MelangeTestPeerToPeer.Core;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +15,13 @@ namespace MelangeTestPeerToPeer.Protocols.Contracts
         public string NodeIPAddress;
         [JsonProperty("NodePort")]
         public int NodePort;
+        public Blockchain Blockchain;
 
         public NodeConnection(string IPAddress, int Port)
         {
             this.NodeIPAddress = IPAddress;
             this.NodePort = Port;
+            this.Blockchain = null;
         }
-
     }
 }
