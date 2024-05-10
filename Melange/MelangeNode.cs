@@ -5,11 +5,11 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using MelangeTestPeerToPeer.Commands;
-using MelangeTestPeerToPeer.Protocols.Contracts;
-using MelangeTestPeerToPeer.Protocols;
+using Melange.Commands;
+using Melange.Protocols.Contracts;
+using Melange.Protocols;
 
-namespace MelangeTestPeerToPeer
+namespace Melange
 {
     public class MelangeNode
     {

@@ -1,12 +1,12 @@
-﻿using MelangeTestPeerToPeer.Core;
-using MelangeTestPeerToPeer.Protocols.Contracts;
+﻿using Melange.Core;
+using Melange.Protocols.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelangeTestPeerToPeer.Commands
+namespace Melange.Commands
 {
     public static class InitializeBlockchainCommand
     {

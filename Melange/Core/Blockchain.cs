@@ -1,11 +1,11 @@
-﻿using MelangeTestPeerToPeer.Protocols.Contracts;
+﻿using Melange.Protocols.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelangeTestPeerToPeer.Core
+namespace Melange.Core
 {
     public class Blockchain
     {

@@ -11,4 +11,4 @@ FROM mcr.microsoft.com/dotnet/runtime:6.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/out ./
 
-#ENTRYPOINT ["dotnet", "MelangeTestPeerToPeer.dll"]
+#ENTRYPOINT ["dotnet", "Melange.dll"]

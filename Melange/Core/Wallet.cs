@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelangeTestPeerToPeer.Core
+namespace Melange.Core
 {
     public class Wallet
     {

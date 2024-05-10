@@ -1,5 +1,5 @@
-﻿using MelangeTestPeerToPeer.Protocols;
-using MelangeTestPeerToPeer.Protocols.Contracts;
+﻿using Melange.Protocols;
+using Melange.Protocols.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelangeTestPeerToPeer.Commands
+namespace Melange.Commands
 {
     public static class SendCommand
     {

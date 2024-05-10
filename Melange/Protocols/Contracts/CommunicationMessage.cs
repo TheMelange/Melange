@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace MelangeTestPeerToPeer.Protocols.Contracts
+namespace Melange.Protocols.Contracts
 {
     public class CommunicationMessage
     {

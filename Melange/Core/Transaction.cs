@@ -1,22 +1,32 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Melange.core.entities.validators;
 
-namespace Melange.core.entities
+namespace Melange.Core
 {
     public class Transaction
     {
+        [JsonProperty("BlockIndex")]
         public int BlockIndex { get; set; }
-        public string FromAddress { get; }
+
+        [JsonProperty("FromAddress")]
+        public string? FromAddress { get; }
+
+        [JsonProperty("ToAddress")]
         public string ToAddress { get; }
+
+        [JsonProperty("Amount")]
         public double Amount { get; }
-        public string Signature { get; }
+
+        [JsonProperty("Signature")]
+        public string? Signature { get; }
+
+        [JsonProperty("Fee")]
         public double Fee { get; }
-        public List<ValidatorEntity> Validators { get; set; }
 
         public Transaction(int blockIndex, string fromAddress, string toAddress, double amount, string signature, double fee = 0.000005)
         {
@@ -26,7 +36,6 @@ namespace Melange.core.entities
             Amount = amount;
             Signature = signature;
             Fee = fee;
-            Validators = new List<ValidatorEntity>();
         }
 
         public bool IsValid()

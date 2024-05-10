@@ -1,4 +1,4 @@
-﻿using MelangeTestPeerToPeer.Core;
+﻿using Melange.Core;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace MelangeTestPeerToPeer.Protocols.Contracts
+namespace Melange.Protocols.Contracts
 {
     public class NodeConnection
     {

@@ -1,11 +1,11 @@
-﻿using MelangeTestPeerToPeer.Core;
+﻿using Melange.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MelangeTestPeerToPeer.Commands
+namespace Melange.Commands
 {
     public static class CreateWalletCommand
     {

@@ -1,6 +1,6 @@
-﻿using MelangeTestPeerToPeer.Commands;
-using MelangeTestPeerToPeer.Core;
-using MelangeTestPeerToPeer.Protocols.Contracts;
+﻿using Melange.Commands;
+using Melange.Core;
+using Melange.Protocols.Contracts;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace MelangeTestPeerToPeer.Protocols
+namespace Melange.Protocols
 {
     public static class CommunicationProtocol
     {
